@@ -35,40 +35,64 @@ const KEY_TO_NOTE: Record<string, string> = {
   'w': 'C#4', 'e': 'D#4', 't': 'F#4', 'y': 'G#4', 'u': 'A#4', 'o': 'C#5', 'p': 'D#5',
 };
 
+// Salamander Grand Piano samples from Tone.js CDN
+const SAMPLE_BASE_URL = 'https://tonejs.github.io/audio/salamander/';
+
 export function usePiano() {
   const [activeKeys, setActiveKeys] = useState<Set<string>>(new Set());
   const [isLoaded, setIsLoaded] = useState(false);
-  const synthRef = useRef<Tone.PolySynth | null>(null);
+  const [volume, setVolume] = useState(-12); // Default to -12dB
+  const samplerRef = useRef<Tone.Sampler | null>(null);
+  const limiterRef = useRef<Tone.Limiter | null>(null);
+  const reverbRef = useRef<Tone.Reverb | null>(null);
   const audioStartedRef = useRef(false);
 
   useEffect(() => {
-    // Create a PolySynth with a realistic piano-like sound
-    synthRef.current = new Tone.PolySynth(Tone.Synth, {
-      oscillator: {
-        type: 'triangle8',
-      },
-      envelope: {
-        attack: 0.005,
-        decay: 0.3,
-        sustain: 0.2,
-        release: 1.5,
-      },
-    }).toDestination();
+    // Set master volume
+    Tone.getDestination().volume.value = volume;
 
-    // Add some reverb for realism
-    const reverb = new Tone.Reverb({
-      decay: 2,
+    // Create a limiter to prevent distortion
+    limiterRef.current = new Tone.Limiter(-1).toDestination();
+
+    // Add reverb for room ambiance
+    reverbRef.current = new Tone.Reverb({
+      decay: 1.5,
       wet: 0.3,
-    }).toDestination();
+    });
+    reverbRef.current.connect(limiterRef.current);
+
+    // Create Sampler with Salamander Grand Piano samples
+    samplerRef.current = new Tone.Sampler({
+      urls: {
+        'C4': 'C4.mp3',
+        'D#4': 'Ds4.mp3',
+        'F#4': 'Fs4.mp3',
+        'A4': 'A4.mp3',
+        'C5': 'C5.mp3',
+        'D#5': 'Ds5.mp3',
+        'F#5': 'Fs5.mp3',
+        'A5': 'A5.mp3',
+      },
+      baseUrl: SAMPLE_BASE_URL,
+      release: 1,
+      onload: () => {
+        setIsLoaded(true);
+      },
+    });
     
-    synthRef.current.connect(reverb);
-    setIsLoaded(true);
+    samplerRef.current.connect(reverbRef.current);
 
     return () => {
-      synthRef.current?.dispose();
-      reverb.dispose();
+      samplerRef.current?.dispose();
+      reverbRef.current?.dispose();
+      limiterRef.current?.dispose();
     };
   }, []);
+
+  // Update volume in real-time
+  useEffect(() => {
+    Tone.getDestination().volume.value = volume;
+  }, [volume]);
 
   const startAudio = useCallback(async () => {
     if (!audioStartedRef.current) {
@@ -79,15 +103,15 @@ export function usePiano() {
 
   const playNote = useCallback(async (note: string) => {
     await startAudio();
-    if (synthRef.current && !activeKeys.has(note)) {
-      synthRef.current.triggerAttack(note, Tone.now());
+    if (samplerRef.current && isLoaded && !activeKeys.has(note)) {
+      samplerRef.current.triggerAttack(note, Tone.now());
       setActiveKeys(prev => new Set([...prev, note]));
     }
-  }, [activeKeys, startAudio]);
+  }, [activeKeys, startAudio, isLoaded]);
 
   const stopNote = useCallback((note: string) => {
-    if (synthRef.current && activeKeys.has(note)) {
-      synthRef.current.triggerRelease(note, Tone.now());
+    if (samplerRef.current && activeKeys.has(note)) {
+      samplerRef.current.triggerRelease(note, Tone.now());
       setActiveKeys(prev => {
         const next = new Set(prev);
         next.delete(note);
@@ -95,6 +119,10 @@ export function usePiano() {
       });
     }
   }, [activeKeys]);
+
+  const updateVolume = useCallback((newVolume: number) => {
+    setVolume(newVolume);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -126,6 +154,8 @@ export function usePiano() {
     blackKeys: BLACK_KEYS,
     activeKeys,
     isLoaded,
+    volume,
+    updateVolume,
     playNote,
     stopNote,
   };

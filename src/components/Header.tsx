@@ -1,11 +1,14 @@
 import { Sun, Moon } from 'lucide-react';
+import { VolumeControl } from './VolumeControl';
 
 interface HeaderProps {
   isDark: boolean;
   onToggleTheme: () => void;
+  volume: number;
+  onVolumeChange: (volume: number) => void;
 }
 
-export function Header({ isDark, onToggleTheme }: HeaderProps) {
+export function Header({ isDark, onToggleTheme, volume, onVolumeChange }: HeaderProps) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 md:px-12">
       <div className="flex items-center gap-3">
@@ -17,17 +20,21 @@ export function Header({ isDark, onToggleTheme }: HeaderProps) {
         </span>
       </div>
       
-      <button
-        onClick={onToggleTheme}
-        className="theme-toggle"
-        aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      >
-        {isDark ? (
-          <Moon className="h-5 w-5 transition-transform duration-300" />
-        ) : (
-          <Sun className="h-5 w-5 transition-transform duration-300" />
-        )}
-      </button>
+      <div className="flex items-center gap-4">
+        <VolumeControl volume={volume} onVolumeChange={onVolumeChange} />
+        
+        <button
+          onClick={onToggleTheme}
+          className="theme-toggle"
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {isDark ? (
+            <Moon className="h-5 w-5 transition-transform duration-300" />
+          ) : (
+            <Sun className="h-5 w-5 transition-transform duration-300" />
+          )}
+        </button>
+      </div>
     </header>
   );
 }
