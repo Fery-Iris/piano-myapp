@@ -6,7 +6,7 @@ import { usePiano } from '@/hooks/usePiano';
 
 const Index = () => {
   const { isDark, toggleTheme } = useTheme();
-  const { isLoaded, volume, updateVolume, ...pianoProps } = usePiano();
+  const { volume, updateVolume, whiteKeys, blackKeys, activeKeys, isLoaded, playNote, stopNote } = usePiano();
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'dark-gradient-bg' : ''}`}>
@@ -29,7 +29,14 @@ const Index = () => {
           </p>
         </div>
         
-        <Piano isLoaded={isLoaded} {...pianoProps} />
+        <Piano 
+          whiteKeys={whiteKeys}
+          blackKeys={blackKeys}
+          activeKeys={activeKeys}
+          isLoaded={isLoaded}
+          playNote={playNote}
+          stopNote={stopNote}
+        />
         
         <footer className="mt-16 text-center">
           <p className="text-xs text-muted-foreground/50">
