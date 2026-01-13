@@ -1,5 +1,5 @@
-import { usePiano } from '@/hooks/usePiano';
 import { PianoKey } from './PianoKey';
+import type { PianoKey as PianoKeyType } from '@/hooks/usePiano';
 
 // Black key positions relative to white keys (percentage from left of white key)
 const BLACK_KEY_POSITIONS = [
@@ -12,8 +12,16 @@ const BLACK_KEY_POSITIONS = [
   { whiteKeyIndex: 8, offset: 65 }, // D#5
 ];
 
-export function Piano() {
-  const { whiteKeys, blackKeys, activeKeys, isLoaded, playNote, stopNote } = usePiano();
+interface PianoProps {
+  whiteKeys: PianoKeyType[];
+  blackKeys: PianoKeyType[];
+  activeKeys: Set<string>;
+  isLoaded: boolean;
+  playNote: (note: string) => void;
+  stopNote: (note: string) => void;
+}
+
+export function Piano({ whiteKeys, blackKeys, activeKeys, isLoaded, playNote, stopNote }: PianoProps) {
 
   const whiteKeyWidth = 60; // px
   const whiteKeyHeight = 200; // px

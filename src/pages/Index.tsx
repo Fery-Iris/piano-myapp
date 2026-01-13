@@ -1,13 +1,23 @@
 import { Header } from '@/components/Header';
 import { Piano } from '@/components/Piano';
+import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { useTheme } from '@/hooks/useTheme';
+import { usePiano } from '@/hooks/usePiano';
 
 const Index = () => {
   const { isDark, toggleTheme } = useTheme();
+  const { isLoaded, volume, updateVolume, ...pianoProps } = usePiano();
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDark ? 'dark-gradient-bg' : ''}`}>
-      <Header isDark={isDark} onToggleTheme={toggleTheme} />
+      <LoadingOverlay isLoading={!isLoaded} />
+      
+      <Header 
+        isDark={isDark} 
+        onToggleTheme={toggleTheme}
+        volume={volume}
+        onVolumeChange={updateVolume}
+      />
       
       <main className="flex min-h-screen flex-col items-center justify-center px-4 pt-20 pb-12">
         <div className="mb-10 text-center">
@@ -19,11 +29,11 @@ const Index = () => {
           </p>
         </div>
         
-        <Piano />
+        <Piano isLoaded={isLoaded} {...pianoProps} />
         
         <footer className="mt-16 text-center">
           <p className="text-xs text-muted-foreground/50">
-            Built with Tone.js for authentic sound
+            Built with Salamander Grand Piano samples
           </p>
         </footer>
       </main>
