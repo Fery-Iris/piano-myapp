@@ -7,7 +7,17 @@ export interface PianoKey {
   isBlack: boolean;
 }
 
+// 3 octaves: C3 to B5 (21 white keys)
 const WHITE_KEYS: PianoKey[] = [
+  // Octave 3 (Z row)
+  { note: 'C3', keyLabel: 'Z', isBlack: false },
+  { note: 'D3', keyLabel: 'X', isBlack: false },
+  { note: 'E3', keyLabel: 'C', isBlack: false },
+  { note: 'F3', keyLabel: 'V', isBlack: false },
+  { note: 'G3', keyLabel: 'B', isBlack: false },
+  { note: 'A3', keyLabel: 'N', isBlack: false },
+  { note: 'B3', keyLabel: 'M', isBlack: false },
+  // Octave 4 (A row)
   { note: 'C4', keyLabel: 'A', isBlack: false },
   { note: 'D4', keyLabel: 'S', isBlack: false },
   { note: 'E4', keyLabel: 'D', isBlack: false },
@@ -15,24 +25,51 @@ const WHITE_KEYS: PianoKey[] = [
   { note: 'G4', keyLabel: 'G', isBlack: false },
   { note: 'A4', keyLabel: 'H', isBlack: false },
   { note: 'B4', keyLabel: 'J', isBlack: false },
-  { note: 'C5', keyLabel: 'K', isBlack: false },
-  { note: 'D5', keyLabel: 'L', isBlack: false },
-  { note: 'E5', keyLabel: ';', isBlack: false },
+  // Octave 5 (Q row)
+  { note: 'C5', keyLabel: 'Q', isBlack: false },
+  { note: 'D5', keyLabel: 'W', isBlack: false },
+  { note: 'E5', keyLabel: 'E', isBlack: false },
+  { note: 'F5', keyLabel: 'R', isBlack: false },
+  { note: 'G5', keyLabel: 'T', isBlack: false },
+  { note: 'A5', keyLabel: 'Y', isBlack: false },
+  { note: 'B5', keyLabel: 'U', isBlack: false },
 ];
 
+// 15 black keys across 3 octaves
 const BLACK_KEYS: PianoKey[] = [
-  { note: 'C#4', keyLabel: 'W', isBlack: true },
-  { note: 'D#4', keyLabel: 'E', isBlack: true },
-  { note: 'F#4', keyLabel: 'T', isBlack: true },
-  { note: 'G#4', keyLabel: 'Y', isBlack: true },
-  { note: 'A#4', keyLabel: 'U', isBlack: true },
-  { note: 'C#5', keyLabel: 'O', isBlack: true },
-  { note: 'D#5', keyLabel: 'P', isBlack: true },
+  // Octave 3 (number row 1-5)
+  { note: 'C#3', keyLabel: '1', isBlack: true },
+  { note: 'D#3', keyLabel: '2', isBlack: true },
+  { note: 'F#3', keyLabel: '3', isBlack: true },
+  { note: 'G#3', keyLabel: '4', isBlack: true },
+  { note: 'A#3', keyLabel: '5', isBlack: true },
+  // Octave 4 (number row 6-0)
+  { note: 'C#4', keyLabel: '6', isBlack: true },
+  { note: 'D#4', keyLabel: '7', isBlack: true },
+  { note: 'F#4', keyLabel: '8', isBlack: true },
+  { note: 'G#4', keyLabel: '9', isBlack: true },
+  { note: 'A#4', keyLabel: '0', isBlack: true },
+  // Octave 5 (I O P [ ])
+  { note: 'C#5', keyLabel: 'I', isBlack: true },
+  { note: 'D#5', keyLabel: 'O', isBlack: true },
+  { note: 'F#5', keyLabel: 'P', isBlack: true },
+  { note: 'G#5', keyLabel: '[', isBlack: true },
+  { note: 'A#5', keyLabel: ']', isBlack: true },
 ];
 
 const KEY_TO_NOTE: Record<string, string> = {
-  'a': 'C4', 's': 'D4', 'd': 'E4', 'f': 'F4', 'g': 'G4', 'h': 'A4', 'j': 'B4', 'k': 'C5', 'l': 'D5', ';': 'E5',
-  'w': 'C#4', 'e': 'D#4', 't': 'F#4', 'y': 'G#4', 'u': 'A#4', 'o': 'C#5', 'p': 'D#5',
+  // White keys - Octave 3 (Z row)
+  'z': 'C3', 'x': 'D3', 'c': 'E3', 'v': 'F3', 'b': 'G3', 'n': 'A3', 'm': 'B3',
+  // White keys - Octave 4 (A row)
+  'a': 'C4', 's': 'D4', 'd': 'E4', 'f': 'F4', 'g': 'G4', 'h': 'A4', 'j': 'B4',
+  // White keys - Octave 5 (Q row)
+  'q': 'C5', 'w': 'D5', 'e': 'E5', 'r': 'F5', 't': 'G5', 'y': 'A5', 'u': 'B5',
+  // Black keys - Octave 3 (number row)
+  '1': 'C#3', '2': 'D#3', '3': 'F#3', '4': 'G#3', '5': 'A#3',
+  // Black keys - Octave 4 (number row)
+  '6': 'C#4', '7': 'D#4', '8': 'F#4', '9': 'G#4', '0': 'A#4',
+  // Black keys - Octave 5
+  'i': 'C#5', 'o': 'D#5', 'p': 'F#5', '[': 'G#5', ']': 'A#5',
 };
 
 // Salamander Grand Piano samples from Tone.js CDN
@@ -41,29 +78,30 @@ const SAMPLE_BASE_URL = 'https://tonejs.github.io/audio/salamander/';
 export function usePiano() {
   const [activeKeys, setActiveKeys] = useState<Set<string>>(new Set());
   const [isLoaded, setIsLoaded] = useState(false);
-  const [volume, setVolume] = useState(-12); // Default to -12dB
+  const [volume, setVolume] = useState(-12);
   const samplerRef = useRef<Tone.Sampler | null>(null);
   const limiterRef = useRef<Tone.Limiter | null>(null);
   const reverbRef = useRef<Tone.Reverb | null>(null);
   const audioStartedRef = useRef(false);
 
   useEffect(() => {
-    // Set master volume
     Tone.getDestination().volume.value = volume;
 
-    // Create a limiter to prevent distortion
     limiterRef.current = new Tone.Limiter(-1).toDestination();
 
-    // Add reverb for room ambiance
     reverbRef.current = new Tone.Reverb({
       decay: 1.5,
       wet: 0.3,
     });
     reverbRef.current.connect(limiterRef.current);
 
-    // Create Sampler with Salamander Grand Piano samples
+    // Extended samples for 3 octaves
     samplerRef.current = new Tone.Sampler({
       urls: {
+        'C3': 'C3.mp3',
+        'D#3': 'Ds3.mp3',
+        'F#3': 'Fs3.mp3',
+        'A3': 'A3.mp3',
         'C4': 'C4.mp3',
         'D#4': 'Ds4.mp3',
         'F#4': 'Fs4.mp3',
@@ -89,7 +127,6 @@ export function usePiano() {
     };
   }, []);
 
-  // Update volume in real-time
   useEffect(() => {
     Tone.getDestination().volume.value = volume;
   }, [volume]);

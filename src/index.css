@@ -133,7 +133,7 @@
 
 @layer components {
   .piano-container {
-    @apply relative rounded-2xl p-6 md:p-8;
+    @apply relative rounded-2xl p-4 md:p-6;
     background: hsl(var(--piano-container-bg));
     border: 1px solid hsl(var(--piano-container-border));
     box-shadow: var(--piano-container-shadow);
@@ -143,6 +143,17 @@
   .dark .piano-container {
     background: hsla(var(--piano-container-bg) / 0.8);
     border: 1px solid hsla(var(--piano-container-border) / 0.5);
+  }
+
+  /* Scrollable piano container with hidden scrollbar */
+  .piano-scroll-container {
+    @apply overflow-x-auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+
+  .piano-scroll-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
   }
 
   .white-key {
