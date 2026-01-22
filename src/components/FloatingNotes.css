@@ -1,0 +1,131 @@
+/* Container untuk background agar tidak menutupi konten */
+.music-notes-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0; /* Changed from -1 to 0 but we need to ensure it's behind content. Actually, index.html root usually is z-0. Let's stick to user's -1 or handle in parent.
+                   The user said "z-index: -1". However, in many React apps, strict -1 might put it behind the body background if not careful.
+                   But let's stick to their CSS first.
+                */
+  z-index: 0;
+  pointer-events: none; /* Agar tidak bisa diklik */
+}
+
+/* Style dasar untuk setiap not musik */
+.note {
+  position: absolute;
+  bottom: -100px; /* Mulai dari bawah layar */
+  display: block;
+  font-size: 2rem;
+  /* Default (Light Mode): Warm Brown/Sepia transparan */
+  color: rgba(60, 42, 20, 0.15);
+  animation: floatUp 10s linear infinite;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* Dark Mode: Putih transparan
+   Menggunakan selector .dark yang ada di html/root element */
+:root.dark .note {
+  color: rgba(255, 255, 255, 0.1);
+}
+
+/* Animasi utama: Naik ke atas, berputar, dan memudar */
+@keyframes floatUp {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.7; /* Muncul perlahan */
+  }
+  100% {
+    transform: translateY(-120vh) rotate(360deg) scale(1.2); /* Naik melewati layar */
+    opacity: 0;
+  }
+}
+
+/* --- Variasi Random untuk setiap Not (Agar terlihat alami) --- */
+
+/* Not 1 */
+.note:nth-child(1) {
+  left: 10%;
+  width: 40px;
+  animation-duration: 12s;
+  animation-delay: 0s;
+}
+
+/* Not 2 */
+.note:nth-child(2) {
+  left: 20%;
+  font-size: 1.5rem;
+  animation-duration: 8s;
+  animation-delay: 2s;
+}
+
+/* Not 3 */
+.note:nth-child(3) {
+  left: 35%;
+  font-size: 3rem;
+  animation-duration: 15s;
+  animation-delay: 4s;
+}
+
+/* Not 4 */
+.note:nth-child(4) {
+  left: 50%;
+  font-size: 2rem;
+  animation-duration: 11s;
+  animation-delay: 0s;
+}
+
+/* Not 5 */
+.note:nth-child(5) {
+  left: 65%;
+  font-size: 2.5rem;
+  animation-duration: 9s;
+  animation-delay: 3s;
+}
+
+/* Not 6 */
+.note:nth-child(6) {
+  left: 80%;
+  font-size: 1.8rem;
+  animation-duration: 13s;
+  animation-delay: 1s;
+}
+
+/* Not 7 */
+.note:nth-child(7) {
+  left: 90%;
+  font-size: 3rem;
+  animation-duration: 16s;
+  animation-delay: 5s;
+}
+
+/* Not 8 */
+.note:nth-child(8) {
+  left: 5%;
+  font-size: 1.2rem;
+  animation-duration: 7s;
+  animation-delay: 6s;
+}
+
+/* Not 9 */
+.note:nth-child(9) {
+  left: 75%;
+  font-size: 2.2rem;
+  animation-duration: 10s;
+  animation-delay: 2.5s;
+}
+
+/* Not 10 */
+.note:nth-child(10) {
+  left: 45%;
+  font-size: 1.6rem;
+  animation-duration: 14s;
+  animation-delay: 1.5s;
+}

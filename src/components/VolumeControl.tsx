@@ -16,7 +16,7 @@ export function VolumeControl({ volume, onVolumeChange }: VolumeControlProps) {
   return (
     <div className="flex items-center gap-2">
       <button
-        onClick={() => onVolumeChange(isMuted ? -12 : -60)}
+        onClick={() => onVolumeChange(isMuted ? -5 : -60)}
         className="p-1.5 rounded-md hover:bg-muted transition-colors"
         aria-label={isMuted ? 'Unmute' : 'Mute'}
       >

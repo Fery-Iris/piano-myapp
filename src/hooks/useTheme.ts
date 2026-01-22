@@ -3,9 +3,13 @@ import { useState, useEffect } from 'react';
 export function useTheme() {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== 'undefined') {
-      return document.documentElement.classList.contains('dark');
+       // Check if user has explicitly set preference, otherwise default to TRUE
+       const isDarkClass = document.documentElement.classList.contains('dark');
+       // If class is present, use it. If not, default to true unless explicitly removed?
+       // Simplest approach for "default dark": return true.
+       return true; 
     }
-    return false;
+    return true;
   });
 
   useEffect(() => {
