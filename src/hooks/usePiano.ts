@@ -109,7 +109,7 @@ const SAMPLE_BASE_URL = "https://tonejs.github.io/audio/salamander/";
 export function usePiano() {
   const [activeKeys, setActiveKeys] = useState<Set<string>>(new Set());
   const [isLoaded, setIsLoaded] = useState(false);
-  const [volume, setVolume] = useState(-5);
+  const [volume, setVolume] = useState(0);
   const [isSustainActive, setIsSustainActive] = useState(false);
   const [isPlayingSong, setIsPlayingSong] = useState(false);
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
@@ -407,15 +407,44 @@ export function usePiano() {
       await startAudio();
       stopSong(); // Stop any currently playing song
 
-      setCurrentSong(song);
-      setIsPlayingSong(true);
+      // EARLY STATE SET REMOVED - We set it later with tickEvents
       Tone.Transport.bpm.value = song.bpm;
+      const ppq = 192; // Default Tone PPQ
+      Tone.Transport.PPQ = ppq;
 
-      // Create a Part to schedule notes
+      // Convert manual song "seconds" time to ticks approximation
+      // song.notes might have 'time' as number (seconds).
+      // We assume `time` was authored at `song.bpm`.
+      // ticks = time * (bpm / 60) * ppq
+      const tickEvents = song.notes.map((n: any) => {
+         let t = typeof n.time === 'number' ? n.time : Tone.Time(n.time).toSeconds();
+         let d = typeof n.duration === 'number' ? n.duration : Tone.Time(n.duration).toSeconds();
+         
+         const ticks = t * (song.bpm / 60) * ppq;
+         const durationTicks = d * (song.bpm / 60) * ppq;
+         
+         return {
+            ...n,
+            time: Math.round(ticks) + "i", // Update 'time' to ticks for Tone.Part
+            ticks: Math.round(ticks),      // Store raw ticks for Visualizer
+            durationTicks: Math.round(durationTicks) + "i",
+            originalDuration: d
+         };
+      });
+      
+      // Update state with tick-enriched notes so Visualizer can use them
+      setCurrentSong({ ...song, notes: tickEvents });
+      setIsPlayingSong(true);
+
+      // Create a Part to schedule notes using Ticks
       const part = new Tone.Part((time, value) => {
         if (samplerRef.current) {
           // Play sound
-          samplerRef.current.triggerAttackRelease(value.note, value.duration, time);
+          // We need to calculate duration in seconds relative to CURRENT BPM for the sampler release?
+          // Tone.Time(value.durationTicks).toSeconds() will return seconds at CURRENT BPM.
+          const durationAtCurrentSpeed = Tone.Time(value.durationTicks).toSeconds();
+          
+          samplerRef.current.triggerAttackRelease(value.note, durationAtCurrentSpeed, time);
           
           // Visual: key down
           Tone.Draw.schedule(() => {
@@ -423,16 +452,15 @@ export function usePiano() {
           }, time);
 
           // Visual: key up after duration
-          const durationSeconds = Tone.Time(value.duration).toSeconds();
           Tone.Draw.schedule(() => {
             setActiveKeys((prev) => {
               const next = new Set(prev);
               next.delete(value.note);
               return next;
             });
-          }, time + durationSeconds);
+          }, time + durationAtCurrentSpeed);
         }
-      }, song.notes).start(0);
+      }, tickEvents).start(0);
 
       activePartRef.current = part;
       Tone.Transport.start();
@@ -533,9 +561,12 @@ export function usePiano() {
              const finalNote = getPianoNote(note.name, shiftOctaves);
              if (finalNote) {
                 midiNotes.push({
+                  // Store both time (for visualizer) and ticks (for audio scheduling)
                   time: note.time,
+                  ticks: note.ticks,
                   note: finalNote,
                   duration: note.duration,
+                  durationTicks: note.durationTicks,
                   velocity: note.velocity
                 });
              }
@@ -550,10 +581,13 @@ export function usePiano() {
 
       if (midi.header.tempos.length > 0) {
         Tone.Transport.bpm.value = midi.header.tempos[0].bpm;
+        Tone.Transport.PPQ = midi.header.ppq; // Sync PPQ
       }
 
       const part = new Tone.Part((time, value) => {
         if (samplerRef.current) {
+           // Tone passed 'time' as the scheduled time.
+           // Trigger sound
            samplerRef.current.triggerAttackRelease(value.note, value.duration, time, value.velocity);
 
            Tone.Draw.schedule(() => {
@@ -566,13 +600,56 @@ export function usePiano() {
                next.delete(value.note);
                return next;
              });
-           }, time + value.duration);
+           }, time + value.duration); // Duration in seconds is fine for Draw offset, even if BPM changes?
+           // Actually, if we use ticks for duration, Draw schedule might drift if BPM changes mid-note?
+           // But 'time' passed here is absolute Transport time.
         }
       }, midiNotes).start(0);
 
-      activePartRef.current = part;
-      await Tone.Transport.start();
+      // IMPORTANT: Tell Tone.Part to interpret 'time' property as Ticks!
+      // But the array has Objects. Tone.Part normally looks for 'time' property.
+      // We can map the array to use 'time: value.ticks + "i"' before passing?
+      // Or just pass an array of [time, value] tuples?
+      
+      // Let's iterate and reformat for Tone.Part
+      const partEvents = midiNotes.map(n => ({
+         time: n.ticks + "i", // Ticks as string "480i"
+         ...n
+      }));
+      
+      // Re-create Part with tick-based events
+      part.dispose(); // dispose the previous bad attempt
+      const tickPart = new Tone.Part((time, value) => {
+         // 'time' is the Seconds time when this tick occurs (autocalculated by Tone based on CURRENT bpm)
+         if (samplerRef.current) {
+            samplerRef.current.triggerAttackRelease(value.note, value.duration, time, value.velocity);
 
+            Tone.Draw.schedule(() => {
+              setActiveKeys((prev) => new Set([...prev, value.note]));
+            }, time);
+
+            Tone.Draw.schedule(() => {
+              setActiveKeys((prev) => {
+                const next = new Set(prev);
+                next.delete(value.note);
+                return next;
+              });
+            }, time + value.duration); // value.duration is original seconds.
+            // If playing slow, the duration of the sound is fixed (audio sample).
+            // But the visual key press should last longer?
+            // "value.duration" is from the MIDI file (seconds).
+            // If speed is 0.5x, we want the key held for 2x seconds.
+            // But we don't have that 2x value easily here unless we calculate it from ticks/bpm.
+            // Actually, if we use ticks, Tone.Draw handles it?
+            // Let's use value.durationTicks + "i" for release?
+            // No, Tone.Draw.schedule takes seconds.
+            // We can ask Tone.Transport.toSeconds(value.durationTicks + "i")?
+            // Yes!
+         }
+      }, partEvents).start(0);
+      
+      activePartRef.current = tickPart;
+      await Tone.Transport.start();
     } catch (e) {
       console.error("Error parsing MIDI:", e);
       setIsPlayingSong(false);
@@ -611,6 +688,20 @@ export function usePiano() {
     };
   }, [playNote, stopNote, isPlayingSong]);
 
+  // Playback Speed
+  const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
+
+  // Update BPM when speed changes or song changes
+  useEffect(() => {
+    if (Tone.Transport.state === 'started' || Tone.Transport.state === 'paused') {
+       // Only update if transport is active/ready? No, update always so it's ready for next play.
+       const baseBpm = currentSong?.bpm || 120;
+       const newBpm = baseBpm * playbackSpeed;
+       // Clamp min BPM to avoid stopping
+       Tone.Transport.bpm.value = Math.max(newBpm, 30);
+    }
+  }, [playbackSpeed, currentSong]);
+
   return {
     whiteKeys: WHITE_KEYS,
     blackKeys: BLACK_KEYS,
@@ -635,5 +726,7 @@ export function usePiano() {
     isLearnMode,
     setIsLearnMode,
     waitingForNotes,
+    playbackSpeed,
+    setPlaybackSpeed,
   };
 }

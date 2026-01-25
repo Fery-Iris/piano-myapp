@@ -77,7 +77,7 @@ export function Piano({ whiteKeys, blackKeys, activeKeys, isLoaded, playNote, st
         {/* Key Bed */}
         <div className="relative rounded-b-lg bg-[#0a0a0a] p-[4px] shadow-lg ring-1 ring-white/5">
           {/* Visualizer Area (Dark Void above keys) */}
-          <div className={`absolute bottom-[176px] left-[4px] right-[4px] h-[500px] bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none overflow-hidden z-0 rounded-t-lg transition-opacity duration-500 ${isPlayingSong ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`absolute bottom-[176px] left-[4px] right-[4px] h-[800px] bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none overflow-hidden z-0 rounded-t-lg transition-opacity duration-500 ${isPlayingSong ? 'opacity-100' : 'opacity-0'}`}>
              <PianoVisualizer currentSong={currentSong} isPlaying={isPlayingSong} />
           </div>
 
@@ -99,7 +99,7 @@ export function Piano({ whiteKeys, blackKeys, activeKeys, isLoaded, playNote, st
   );
 
   return (
-    <div className="piano-container flex justify-center py-8 w-full overflow-x-auto px-4 md:px-0 scrollbar-hide">
+    <div className="piano-container flex justify-center py-8 w-full overflow-x-auto md:overflow-visible px-4 md:px-0 scrollbar-hide">
       <div className="min-w-fit">
       <Chassis>
         <div className="mx-auto"> {/* Removed piano-scroll-container constraints to fit chassis */}

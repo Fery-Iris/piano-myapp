@@ -1,4 +1,4 @@
-import { Sun, Moon, Play, Square, Music, Upload, GraduationCap } from 'lucide-react';
+import { Sun, Moon, Play, Square, Music, Upload, GraduationCap, Gauge } from 'lucide-react';
 import { VolumeControl } from './VolumeControl';
 import { Song, SONGS } from '@/data/songs';
 import {
@@ -37,6 +37,8 @@ interface HeaderProps {
   hasRecording: boolean;
   isLearnMode: boolean;
   onSetLearnMode: (mode: boolean) => void;
+  playbackSpeed?: number;
+  onPlaybackSpeedChange?: (speed: number) => void;
 }
 
 export function Header({ 
@@ -55,7 +57,9 @@ export function Header({
   onPlayRecording,
   hasRecording,
   isLearnMode,
-  onSetLearnMode
+  onSetLearnMode,
+  playbackSpeed = 1,
+  onPlaybackSpeedChange
 }: HeaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -249,6 +253,32 @@ export function Header({
         </div>
 
 
+        <div className="h-4 w-px bg-border hidden md:block" />
+
+        {/* Speed Control */}
+        {onPlaybackSpeedChange && (
+          <div className="flex items-center gap-2">
+             <Select 
+                value={playbackSpeed.toString()} 
+                onValueChange={(v) => onPlaybackSpeedChange(parseFloat(v))}
+             >
+                <SelectTrigger className="w-[85px] h-8 text-xs bg-transparent border-transparent hover:bg-muted/50 transition-colors focus:ring-0">
+                   <div className="flex items-center gap-1.5">
+                      <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="font-medium">{playbackSpeed}x</span>
+                   </div>
+                </SelectTrigger>
+                <SelectContent align="end">
+                   {[0.5, 0.75, 1.0, 1.25, 1.5].map((speed) => (
+                      <SelectItem key={speed} value={speed.toString()} className="text-xs">
+                         {speed}x {speed === 1.0 ? '(Normal)' : speed < 1.0 ? '(Slow)' : '(Fast)'}
+                      </SelectItem>
+                   ))}
+                </SelectContent>
+             </Select>
+          </div>
+        )}
+        
         <div className="h-4 w-px bg-border hidden md:block" />
 
 

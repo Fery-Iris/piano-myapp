@@ -44,9 +44,7 @@ export function PianoVisualizer({ currentSong, isPlaying }: PianoVisualizerProps
       return x;
     };
 
-    const NOTE_SPEED = 100; // Pixels per second
-    // If canvas height is 200px, a note playing NOW is at Y=200.
-    // A note playing in 1s is at Y=100.
+    const NOTE_SPEED = 100; 
     
     let animationFrameId: number;
 
@@ -57,34 +55,54 @@ export function PianoVisualizer({ currentSong, isPlaying }: PianoVisualizerProps
 
       if (!currentSong || !isPlaying) return;
 
-      const now = Tone.Transport.seconds;
+      const nowSeconds = Tone.Transport.seconds;
+      const currentTick = Tone.Transport.ticks; // Get current tick position
+      const ppq = Tone.Transport.PPQ;
+      
+      // Calculate Pixels Per Tick
+      // Desire: 1 Beat (quarter note) = 100 pixels height?
+      // 1 Beat = PPQ ticks (usually 192).
+      // PIXELS_PER_TICK = 100 / 192 ~= 0.52
+      const PIXELS_PER_TICK = 120 / ppq; // slightly faster feel -> 120px per beat
 
       // Draw Notes
       currentSong.notes.forEach((note: any) => {
-        // note.time might be "0:0:0" string or number
-        let startTime = 0;
-        let duration = 0;
+        // We MUST use ticks for stable visual speed relative to audio speed
+        let startTick = 0;
+        let durationTicks = 0;
 
-        if (typeof note.time === 'number') {
-           startTime = note.time;
+        if (note.ticks !== undefined) {
+           startTick = note.ticks;
+        } else if (typeof note.time === 'number') {
+           // Fallback for seconds-based notes without ticks (shouldn't happen with our recent fix, but safety first)
+           // Convert seconds to ticks using current BPM. 
+           // Note: This might jitter if BPM changes, but manual songs have ticks injected now.
+           startTick = note.time * (Tone.Transport.bpm.value / 60) * ppq;
         } else {
-           startTime = Tone.Time(note.time).toSeconds();
+           startTick = Tone.Time(note.time).toTicks();
         }
         
-        if (typeof note.duration === 'number') {
-            duration = note.duration;
+        if (note.durationTicks !== undefined) {
+             // Tone.js MIDI parser gives durationTicks
+             durationTicks = note.durationTicks;
+        } else if (typeof note.duration === 'number') {
+             durationTicks = note.duration * (Tone.Transport.bpm.value / 60) * ppq;
         } else {
-            duration = Tone.Time(note.duration).toSeconds();
+             durationTicks = Tone.Time(note.duration).toTicks();
         }
 
-        const timeUntilHit = startTime - now;
+        const ticksUntilHit = startTick - currentTick;
         
-        // Only draw if within visible range (e.g. 0 to 3 seconds in future)
-        // And not too far in past
-        if (timeUntilHit < 4 && timeUntilHit + duration > -1) {
+        // Visible range in Ticks
+        // Height 800px.
+        // Max Ticks = 800 / PIXELS_PER_TICK = 800 / 0.6 = ~1333 ticks (~7 beats).
+        // Let's render if within range.
+        const maxVisibleTicks = height / PIXELS_PER_TICK;
+
+        if (ticksUntilHit < maxVisibleTicks && ticksUntilHit + durationTicks > -100) {
             const yHit = height; 
-            const yPos = yHit - (timeUntilHit * NOTE_SPEED);
-            const barHeight = duration * NOTE_SPEED;
+            const yPos = yHit - (ticksUntilHit * PIXELS_PER_TICK);
+            const barHeight = durationTicks * PIXELS_PER_TICK;
 
             const x = getNoteX(note.note);
             const isBlack = note.note.includes('#');
@@ -92,12 +110,10 @@ export function PianoVisualizer({ currentSong, isPlaying }: PianoVisualizerProps
             // Draw
             ctx.fillStyle = isBlack ? '#a855f7' : '#06b6d4'; // Purple / Cyan
             ctx.globalAlpha = 0.8;
-
             
             const rectY = yPos - barHeight;
             const w = isBlack ? 20 : 36;
             
-            // Rounded rect visual hack? Just rect for now.
             ctx.fillRect(x + (keyGap), rectY, w, barHeight);
             
             // Glow
@@ -121,7 +137,7 @@ export function PianoVisualizer({ currentSong, isPlaying }: PianoVisualizerProps
     <canvas 
       ref={canvasRef} 
       width={960} // Approx 21 white keys * 46px
-      height={500} // Increased height for longer waterfall
+      height={800} // Increased height for longer waterfall
       className="w-full h-full pointer-events-none"
       style={{
          zIndex: 0

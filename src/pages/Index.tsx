@@ -30,7 +30,9 @@ const Index = () => {
     playRecording,
     recordedNotes,
     isLearnMode,
-    setIsLearnMode
+    setIsLearnMode,
+    playbackSpeed,
+    setPlaybackSpeed
   } = usePiano();
 
   return (
@@ -56,6 +58,8 @@ const Index = () => {
         hasRecording={recordedNotes.length > 0}
         isLearnMode={isLearnMode}
         onSetLearnMode={setIsLearnMode}
+        playbackSpeed={playbackSpeed}
+        onPlaybackSpeedChange={setPlaybackSpeed}
       />
       
       <main className="flex min-h-screen flex-col items-center justify-center px-4 pt-48 landscape:pt-24 md:pt-28 pb-12"> {/* increased pt for mobile header, less for landscape */}

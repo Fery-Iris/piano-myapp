@@ -30,7 +30,7 @@ export function VolumeControl({ volume, onVolumeChange }: VolumeControlProps) {
         value={[volume]}
         onValueChange={handleVolumeChange}
         min={-40}
-        max={0}
+        max={10}
         step={1}
         className="w-20 md:w-24"
         aria-label="Volume"
