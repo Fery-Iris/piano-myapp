@@ -428,6 +428,7 @@ export function usePiano() {
             time: Math.round(ticks) + "i", // Update 'time' to ticks for Tone.Part
             ticks: Math.round(ticks),      // Store raw ticks for Visualizer
             durationTicks: Math.round(durationTicks) + "i",
+            rawDurationTicks: Math.round(durationTicks), // For Visualizer
             originalDuration: d
          };
       });

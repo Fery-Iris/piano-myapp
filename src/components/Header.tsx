@@ -143,12 +143,12 @@ export function Header({
 
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 flex flex-col md:flex-row items-center justify-between px-6 py-4 md:px-12 gap-4 bg-background/80 backdrop-blur-md border-b border-border/50">
-      <div className="flex items-center gap-3">
-        <h1 className="font-display text-2xl font-semibold tracking-tight">
+    <header className="fixed top-0 left-0 right-0 z-50 flex flex-col md:flex-row items-center justify-between px-6 py-4 md:px-12 landscape:py-1 landscape:px-4 gap-2 md:gap-4 bg-background/80 backdrop-blur-md border-b border-border/50">
+      <div className="flex items-center gap-2 md:gap-3">
+        <h1 className="font-display text-xl md:text-2xl landscape:text-lg font-semibold tracking-tight">
           Piano
         </h1>
-        <span className="text-sm font-light text-muted-foreground tracking-widest uppercase">
+        <span className="text-xs md:text-sm landscape:text-[10px] font-light text-muted-foreground tracking-widest uppercase">
           Virtual
         </span>
       </div>

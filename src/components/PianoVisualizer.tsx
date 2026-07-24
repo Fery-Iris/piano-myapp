@@ -82,9 +82,11 @@ export function PianoVisualizer({ currentSong, isPlaying }: PianoVisualizerProps
            startTick = Tone.Time(note.time).toTicks();
         }
         
-        if (note.durationTicks !== undefined) {
-             // Tone.js MIDI parser gives durationTicks
-             durationTicks = note.durationTicks;
+        if (note.rawDurationTicks !== undefined) {
+             durationTicks = note.rawDurationTicks;
+        } else if (note.durationTicks !== undefined) {
+             // Tone.js MIDI parser gives durationTicks as number, or it might be string "192i"
+             durationTicks = typeof note.durationTicks === 'string' ? parseInt(note.durationTicks) : note.durationTicks;
         } else if (typeof note.duration === 'number') {
              durationTicks = note.duration * (Tone.Transport.bpm.value / 60) * ppq;
         } else {
